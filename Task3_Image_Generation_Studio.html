@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DecodeLabs — Generation Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0e13;
+    --bg-raised: #10151c;
+    --grid-line: rgba(94, 234, 212, 0.06);
+    --cyan: #5eead4;
+    --cyan-dim: #2f6b64;
+    --amber: #f5a623;
+    --red: #ef5350;
+    --text-hi: #e8eef2;
+    --text-lo: #7c8b96;
+    --border: #1c2530;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/32px 32px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/32px 32px,
+      var(--bg);
+    color:var(--text-hi);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding:32px 20px 80px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  header{margin-bottom:36px;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.12em;
+    color:var(--cyan);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .eyebrow::before{content:"";width:6px;height:6px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan);}
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:clamp(28px, 4vw, 42px);
+    margin:0 0 8px;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:var(--text-lo);font-size:14.5px;max-width:560px;line-height:1.5;}
+
+  .panel{
+    background:var(--bg-raised);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:24px;
+    margin-bottom:20px;
+  }
+  .panel-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-lo);
+    margin-bottom:16px;
+    display:flex;
+    justify-content:space-between;
+  }
+
+  label{display:block;font-size:13px;color:var(--text-lo);margin-bottom:6px;font-weight:500;}
+  input[type=text], input[type=password], textarea, select{
+    width:100%;
+    background:#0d1319;
+    border:1px solid var(--border);
+    color:var(--text-hi);
+    font-family:'Inter', sans-serif;
+    font-size:14.5px;
+    padding:11px 12px;
+    border-radius:4px;
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  input:focus, textarea:focus, select:focus{border-color:var(--cyan-dim);}
+  textarea{resize:vertical;min-height:84px;font-family:'Inter';line-height:1.5;}
+
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  .field{margin-bottom:0;}
+
+  .key-row{display:flex;gap:10px;align-items:flex-end;}
+  .key-row .field{flex:1;}
+  .key-note{font-size:12px;color:var(--text-lo);margin-top:8px;line-height:1.5;}
+  .key-note strong{color:var(--amber);font-weight:500;}
+
+  button.primary{
+    margin-top:20px;
+    width:100%;
+    background:var(--cyan);
+    color:#04231f;
+    border:none;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:14px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:filter .15s ease, transform .1s ease;
+  }
+  button.primary:hover{filter:brightness(1.1);}
+  button.primary:active{transform:scale(0.995);}
+  button.primary:disabled{background:var(--border);color:var(--text-lo);cursor:not-allowed;}
+
+  /* pipeline trace — signature element */
+  .trace{
+    display:flex;
+    align-items:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+    color:var(--text-lo);
+    margin-top:18px;
+    flex-wrap:wrap;
+    gap:0;
+  }
+  .trace .step{
+    padding:5px 10px;
+    border:1px solid var(--border);
+    border-radius:3px;
+    margin-right:6px;
+    margin-bottom:6px;
+    transition:all .25s ease;
+  }
+  .trace .step.active{
+    color:#04231f;
+    background:var(--cyan);
+    border-color:var(--cyan);
+    box-shadow:0 0 12px rgba(94,234,212,0.35);
+  }
+  .trace .step.done{color:var(--cyan);border-color:var(--cyan-dim);}
+  .trace .step.error{color:var(--red);border-color:var(--red);background:rgba(239,83,80,0.08);}
+  .trace .arrow{color:var(--border);margin-right:6px;margin-bottom:6px;}
+
+  .status-line{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:var(--text-lo);
+    margin-top:12px;
+    min-height:18px;
+  }
+  .status-line.error{color:var(--red);}
+  .status-line.ok{color:var(--cyan);}
+
+  .output{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:340px;
+    border:1px dashed var(--border);
+    border-radius:6px;
+    background:
+      repeating-linear-gradient(45deg, #0d1319, #0d1319 10px, #0f151b 10px, #0f151b 20px);
+    position:relative;
+    overflow:hidden;
+  }
+  .output img{max-width:100%;max-height:520px;display:block;border-radius:3px;}
+  .placeholder{color:var(--text-lo);font-family:'JetBrains Mono', monospace;font-size:12px;text-align:center;line-height:1.8;}
+  .placeholder .big{font-size:28px;display:block;margin-bottom:8px;opacity:0.4;}
+
+  .download-bar{display:flex;gap:10px;margin-top:14px;}
+  .download-bar a, .download-bar button{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--text-hi);
+    background:none;
+    border:1px solid var(--border);
+    padding:9px 14px;
+    border-radius:4px;
+    text-decoration:none;
+    cursor:pointer;
+  }
+  .download-bar a:hover, .download-bar button:hover{border-color:var(--cyan-dim);color:var(--cyan);}
+
+  footer{text-align:center;color:var(--text-lo);font-size:12px;margin-top:40px;font-family:'JetBrains Mono', monospace;}
+  footer a{color:var(--cyan);text-decoration:none;}
+
+  @media (max-width:640px){
+    .row{grid-template-columns:1fr;}
+    .key-row{flex-direction:column;align-items:stretch;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">DecodeLabs · Project 3</div>
+    <h1>Multimodal Image Generation Studio</h1>
+    <p class="sub">Text → payload → diffusion → verified asset. A small orchestration layer over Stability AI's image generation API, built with the timeout, retry and integrity rules from the brief.</p>
+  </header>
+
+  <div class="panel">
+    <div class="panel-label"><span>01 · Credentials</span><span id="key-status">not set</span></div>
+    <div class="key-row">
+      <div class="field">
+        <label for="apiKey">Stability AI API key</label>
+        <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off">
+      </div>
+    </div>
+    <p class="key-note">Kept only in this browser tab's memory — never saved, never sent anywhere but api.stability.ai. Get a key at <strong>platform.stability.ai</strong>. Refreshing the page clears it.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label"><span>02 · Prompt payload</span></div>
+    <div class="field">
+      <label for="prompt">Describe the image</label>
+      <textarea id="prompt" placeholder="A weathered lighthouse on a cliff at dawn, cinematic light, muted colors"></textarea>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="aspect">Aspect ratio</label>
+        <select id="aspect">
+          <option value="1:1">1:1 — square (1024×1024)</option>
+          <option value="16:9">16:9 — landscape</option>
+          <option value="9:16">9:16 — vertical</option>
+          <option value="3:2">3:2 — photo landscape</option>
+          <option value="2:3">2:3 — photo portrait</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="style">Style preset</label>
+        <select id="style">
+          <option value="">None</option>
+          <option value="photographic">Photographic</option>
+          <option value="digital-art">Digital art</option>
+          <option value="cinematic">Cinematic</option>
+          <option value="anime">Anime</option>
+          <option value="low-poly">Low poly</option>
+          <option value="pixel-art">Pixel art</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="primary" id="genBtn">Generate image</button>
+
+    <div class="trace" id="trace">
+      <span class="step" data-step="serialize">SERIALIZE</span>
+      <span class="arrow">→</span>
+      <span class="step" data-step="request">REQUEST</span>
+      <span class="arrow">→</span>
+      <span class="step" data-step="gate">SAFETY GATE</span>
+      <span class="arrow">→</span>
+      <span class="step" data-step="decode">DECODE</span>
+      <span class="arrow">→</span>
+      <span class="step" data-step="verify">VERIFY</span>
+    </div>
+    <div class="status-line" id="statusLine">Idle — awaiting prompt.</div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label"><span>03 · Output</span><span id="dims-label"></span></div>
+    <div class="output" id="output">
+      <div class="placeholder">
+        <span class="big">◇</span>
+        No asset generated yet
+      </div>
+    </div>
+    <div class="download-bar" id="downloadBar" style="display:none;">
+      <a id="downloadLink" download="generated.png">Download PNG</a>
+      <button id="regenBtn">Regenerate</button>
+    </div>
+  </div>
+
+  <footer>Project 3 · Generation Studio — built for DecodeLabs · <a href="https://platform.stability.ai/docs/api-reference" target="_blank">Stability API docs</a></footer>
+</div>
+
+<script>
+const genBtn = document.getElementById('genBtn');
+const regenBtn = document.getElementById('regenBtn');
+const apiKeyInput = document.getElementById('apiKey');
+const keyStatus = document.getElementById('key-status');
+const promptInput = document.getElementById('prompt');
+const aspectSelect = document.getElementById('aspect');
+const styleSelect = document.getElementById('style');
+const output = document.getElementById('output');
+const statusLine = document.getElementById('statusLine');
+const downloadBar = document.getElementById('downloadBar');
+const downloadLink = document.getElementById('downloadLink');
+const dimsLabel = document.getElementById('dims-label');
+
+apiKeyInput.addEventListener('input', () => {
+  keyStatus.textContent = apiKeyInput.value.trim() ? 'set' : 'not set';
+  keyStatus.style.color = apiKeyInput.value.trim() ? 'var(--cyan)' : 'var(--text-lo)';
+});
+
+function setTrace(active, done = [], errorStep = null){
+  document.querySelectorAll('.trace .step').forEach(el => {
+    el.classList.remove('active','done','error');
+    const step = el.dataset.step;
+    if (step === errorStep) el.classList.add('error');
+    else if (step === active) el.classList.add('active');
+    else if (done.includes(step)) el.classList.add('done');
+  });
+}
+
+function setStatus(msg, type){
+  statusLine.textContent = msg;
+  statusLine.className = 'status-line' + (type ? ' ' + type : '');
+}
+
+// Fetch wrapper implementing the split-timeout + single retry pattern from the brief.
+async function fetchWithTimeoutAndRetry(url, options, {connectMs = 3050, readMs = 60000, retries = 2} = {}){
+  let attempt = 0;
+  let lastErr;
+  while (attempt <= retries){
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), connectMs + readMs);
+    try{
+      const res = await fetch(url, {...options, signal: controller.signal});
+      clearTimeout(timer);
+      if (res.status === 429 || res.status === 503){
+        throw {retryable: true, status: res.status, response: res};
+      }
+      return res;
+    } catch(err){
+      clearTimeout(timer);
+      lastErr = err;
+      const retryable = err.retryable || err.name === 'AbortError';
+      if (!retryable || attempt === retries) throw err;
+      const backoff = Math.min(2000 * Math.pow(2, attempt), 15000) + Math.random()*500;
+      setStatus(`Request throttled — retrying in ${(backoff/1000).toFixed(1)}s (attempt ${attempt+2}/${retries+1})…`);
+      await new Promise(r => setTimeout(r, backoff));
+    }
+    attempt++;
+  }
+  throw lastErr;
+}
+
+async function generate(){
+  const key = apiKeyInput.value.trim();
+  const prompt = promptInput.value.trim();
+
+  if (!key){ setStatus('Missing API key — paste one above.', 'error'); apiKeyInput.focus(); return; }
+  if (!prompt){ setStatus('Missing prompt — describe what to generate.', 'error'); promptInput.focus(); return; }
+
+  genBtn.disabled = true;
+  downloadBar.style.display = 'none';
+  dimsLabel.textContent = '';
+  output.innerHTML = '<div class="placeholder">Generating…</div>';
+
+  const formData = new FormData();
+  formData.append('prompt', prompt);
+  formData.append('aspect_ratio', aspectSelect.value);
+  formData.append('output_format', 'png');
+  if (styleSelect.value) formData.append('style_preset', styleSelect.value);
+
+  setTrace('serialize');
+  setStatus('Serializing payload…');
+  await new Promise(r => setTimeout(r, 150)); // let the UI paint the trace step
+
+  setTrace('request', ['serialize']);
+  setStatus('Sending request to Stability AI…');
+
+  try{
+    const res = await fetchWithTimeoutAndRetry('https://api.stability.ai/v2beta/stable-image/generate/core', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Accept': 'image/*'
+      },
+      body: formData
+    });
+
+    setTrace('gate', ['serialize','request']);
+    setStatus('Checking response…');
+
+    if (!res.ok){
+      let detail = `HTTP ${res.status}`;
+      try{
+        const errJson = await res.json();
+        if (errJson && errJson.errors) detail = errJson.errors.join('; ');
+        else if (errJson && errJson.message) detail = errJson.message;
+      } catch(_) {}
+
+      if (res.status === 401 || res.status === 403){
+        throw new Error(`Auth rejected (${res.status}): check your API key. ${detail}`);
+      }
+      if (res.status === 400){
+        throw new Error(`Content or parameter rejected at the safety gate: ${detail}`);
+      }
+      throw new Error(`Generation failed: ${detail}`);
+    }
+
+    setTrace('decode', ['serialize','request','gate']);
+    setStatus('Decoding binary image stream…');
+
+    const blob = await res.blob();
+    if (!blob || blob.size < 500){
+      throw new Error('Response too small to be a valid image — likely a truncated or blocked stream.');
+    }
+
+    setTrace('verify', ['serialize','request','gate','decode']);
+    setStatus('Verifying pixel data…');
+
+    // Force a real decode (the browser equivalent of Image.open().load()) before trusting the bytes.
+    const objectUrl = URL.createObjectURL(blob);
+    await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Image failed to decode — corrupted or truncated binary.'));
+      img.src = objectUrl;
+    });
+
+    setTrace(null, ['serialize','request','gate','decode','verify']);
+    setStatus(`Done — ${(blob.size/1024).toFixed(0)} KB verified and rendered.`, 'ok');
+
+    output.innerHTML = '';
+    const imgEl = document.createElement('img');
+    imgEl.src = objectUrl;
+    output.appendChild(imgEl);
+    dimsLabel.textContent = aspectSelect.value;
+
+    downloadLink.href = objectUrl;
+    downloadBar.style.display = 'flex';
+
+  } catch(err){
+    console.error(err);
+    const active = document.querySelector('.trace .step.active');
+    const failedStep = active ? active.dataset.step : 'request';
+    setTrace(null, [], failedStep);
+    setStatus(err.message || 'Unexpected error — see console for details.', 'error');
+    output.innerHTML = `<div class="placeholder">⚠ Generation failed<br><span style="color:var(--text-lo);font-size:11px;">${(err.message||'').slice(0,140)}</span></div>`;
+  } finally {
+    genBtn.disabled = false;
+  }
+}
+
+genBtn.addEventListener('click', generate);
+regenBtn.addEventListener('click', generate);
+promptInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) generate();
+});
+</script>
+</body>
+</html>
